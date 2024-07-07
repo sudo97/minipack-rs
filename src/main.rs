@@ -62,10 +62,12 @@ fn create_graph(path: &str) -> Result<Vec<Asset>> {
     Ok(result)
 }
 
-fn main() {
+fn main() -> Result<()> {
     let mut args = std::env::args();
-    match args.nth(1) {
-        Some(arg) => run_for_path(&arg).unwrap(),
-        None => println!("Please provide a path argument"),
-    }
+    let path = args
+        .nth(1)
+        .ok_or(GraphError)
+        .context("Please provide a path argument")?;
+    run_for_path(&path)?;
+    Ok(())
 }
