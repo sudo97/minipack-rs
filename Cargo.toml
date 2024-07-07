@@ -1,0 +1,20 @@
+[package]
+name = "minipack-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.86"
+# oxc = "0.16.3"
+# rslint_parser = "0.3.1"
+swc_common = "0.34.4"
+swc_ecma_ast = "0.115.1"
+swc_ecma_codegen = "0.151.1"
+swc_ecma_parser = "0.146.12"
+swc_ecma_transforms = "0.232.1"
+swc_ecma_transforms_module = "0.183.1"
+swc_ecma_visit = "0.101.0"
+# tempfile = "3.10.1"
+# uuid = { version = "1.9.1", features = ["v4"] }
