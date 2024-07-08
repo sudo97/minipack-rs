@@ -49,7 +49,7 @@ fn create_graph(path: &str) -> Result<Vec<Asset>> {
                 .context(format!("Failed to find a dirname of {}", asset.filename))?;
 
             if let Some(child) = visited.iter().find(|a| a.filename == absolute_path) {
-                asset.mapping.insert(child.filename.clone(), child.id);
+                asset.mapping.insert(dep.clone(), child.id);
             } else {
                 let child = create_asset(absolute_path, id)?;
 
