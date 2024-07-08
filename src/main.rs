@@ -5,10 +5,8 @@ use swc_solution::{create_asset, Asset};
 
 fn run_for_path(path: &str) -> Result<()> {
     let res = create_graph(path)?;
-    for asset in res {
-        println!("{:}", asset);
-        println!();
-    }
+    let bundle = bundle(res)?;
+    println!("{}", bundle);
     Ok(())
 }
 
@@ -29,10 +27,12 @@ fn create_graph(path: &str) -> Result<Vec<Asset>> {
 
     id += 1;
 
-    let mut result = Vec::new();
+    let mut visited: Vec<Asset> = vec![main_asset.clone()];
 
     let mut queue = VecDeque::new();
     queue.push_back(main_asset.clone());
+
+    let mut result: Vec<Asset> = vec![];
 
     while let Some(mut asset) = queue.pop_front() {
         let dirname = std::path::Path::new(&asset.filename)
@@ -41,20 +41,25 @@ fn create_graph(path: &str) -> Result<Vec<Asset>> {
             .context(format!("Failed to find a dirname of {}", asset.filename))?;
 
         for dep in &asset.dependencies {
-            let dep_path = dirname.join(dep);
+            let dep_path = dirname.join(dep).canonicalize()?;
 
             let absolute_path = dep_path
                 .to_str()
                 .ok_or(GraphError)
                 .context(format!("Failed to find a dirname of {}", asset.filename))?;
 
-            let child = create_asset(absolute_path, id)?;
+            if let Some(child) = visited.iter().find(|a| a.filename == absolute_path) {
+                asset.mapping.insert(child.filename.clone(), child.id);
+            } else {
+                let child = create_asset(absolute_path, id)?;
 
-            asset.mapping.insert(dep.clone(), child.id);
+                asset.mapping.insert(dep.clone(), child.id);
 
-            id += 1;
+                id += 1;
 
-            queue.push_back(child.clone());
+                queue.push_back(child.clone());
+                visited.push(child);
+            }
         }
         result.push(asset);
     }
@@ -62,6 +67,44 @@ fn create_graph(path: &str) -> Result<Vec<Asset>> {
     Ok(result)
 }
 
+fn bundle(graph: Vec<Asset>) -> Result<String> {
+    let mut result = String::new();
+
+    for asset in graph {
+        let code = format!(
+            "{}:  [
+            function (require, module, exports) {{
+                {}
+            }},
+            {:?}
+        ],
+        ",
+            asset.id, asset.code, asset.mapping
+        );
+        result.push_str(&code);
+    }
+
+    Ok(format!(
+        "(function(modules) {{
+            function require(id) {{
+                const [fn, mapping] = modules[id];
+                
+                function localRequire(name) {{
+                    return require(mapping[name]);
+                }}
+                
+                const module = {{ exports : {{}} }};
+                
+                fn(localRequire, module, module.exports);
+                
+                return module.exports;
+            }}
+            
+            require(0);
+        }})({{ {} }})",
+        result
+    ))
+}
 fn main() -> Result<()> {
     let mut args = std::env::args();
     let path = args

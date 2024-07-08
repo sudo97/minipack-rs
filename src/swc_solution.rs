@@ -56,7 +56,10 @@ pub fn create_asset(filepath: &str, id: usize) -> Result<Asset> {
 
     Ok(Asset {
         id,
-        filename: filepath.to_string(),
+        filename: {
+            let path = std::path::Path::new(filepath);
+            path.canonicalize().unwrap().to_str().unwrap().to_string()
+        },
         dependencies,
         code,
         mapping: HashMap::new(),
