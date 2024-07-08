@@ -3,10 +3,10 @@ use anyhow::{Context, Result};
 use std::{collections::VecDeque, fmt::Display};
 use swc_solution::{create_asset, Asset};
 
-fn run_for_path(path: &str) -> Result<()> {
+fn run_for_path(path: &str, output_path: &str) -> Result<()> {
     let res = create_graph(path)?;
     let bundle = bundle(res)?;
-    println!("{}", bundle);
+    std::fs::write(output_path, bundle)?;
     Ok(())
 }
 
@@ -106,11 +106,15 @@ fn bundle(graph: Vec<Asset>) -> Result<String> {
     ))
 }
 fn main() -> Result<()> {
-    let mut args = std::env::args();
+    let args: Vec<String> = std::env::args().collect();
     let path = args
-        .nth(1)
+        .get(1)
         .ok_or(GraphError)
         .context("Please provide a path argument")?;
-    run_for_path(&path)?;
+    let output_path = args
+        .get(2)
+        .ok_or(GraphError)
+        .context("Please provide an output path argument")?;
+    run_for_path(path, output_path)?;
     Ok(())
 }
