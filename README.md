@@ -22,6 +22,24 @@ cargo run <input_path> <output_path>
 
 Cargo.toml includes few dependencies that are left as comments. I tried doing it with rslint's parser, but it's ast was too low-level, and I don't think it is capable of transpiling. I also tried OXC, which I think is a great project, but it was hard for me to fight the borrow checker with it's allocator, so I was unable to figure out how to transpiled with it. SWC seemed to fit in.
 
+One issue I found is that when I do this:
+
+```js
+console.log(importedFunction());
+```
+
+it produces something like this:
+
+```js
+console.log(0, importedFunction());
+```
+
+while the swc playground produces this:
+
+```js
+console.log((0, importedFunction()));
+```
+
 ## What's the difference to Minipack?
 
 First and foremost, it uses Rust btw. Also I didn't fully understand it's graph walking algorythm, so I just implemented my own width-first search.
